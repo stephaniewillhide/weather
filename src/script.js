@@ -57,8 +57,8 @@ function displayForecast(response) {
   for (let index = 0; index < 6; index++) {
     forecast = response.data.list[index];
     forecastElement.innerHTML += `
-    <div class="col-2 text-center">
-      <h3 class="h5 text-gray">
+    <div class="col-4 col-sm-2 text-center pb-3">
+      <h3 class="h5">
         ${formatHours(forecast.dt * 1000)}
       </h3>
       <img class="img-50"
@@ -66,7 +66,7 @@ function displayForecast(response) {
           forecast.weather[0].icon
         }@2x.png"
       />
-      <div class="text-gray">
+      <div>
         <strong>
           ${Math.round(forecast.main.temp_max)}°
         </strong>
