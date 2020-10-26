@@ -1,6 +1,6 @@
-let currentTime = new Date();
+function formatDate(timestamp) {
+  let date = new Date(timestamp);
 
-function formatDate(date) {
   let days = [
     "Sunday",
     "Monday",
@@ -10,54 +10,113 @@ function formatDate(date) {
     "Friday",
     "Saturday"
   ];
-
-  let currentDay = days[currentTime.getDay()];
-  let currentHour = currentTime.getHours();
-  let currentMinutes = currentTime.getMinutes();
-
-  let formattedDate = `${currentDay} ${currentHour}:${currentMinutes}`;
-
-  return formattedDate;
+  let day = days[date.getDay()];
+  return `${day} ${formatHours(timestamp)}`;
 }
 
-let timeElement = document.querySelector("#current-time");
-timeElement.innerHTML = formatDate(currentTime);
-
-let form = document.querySelector("form");
-form.addEventListener("submit", returnCity);
-
-function returnCity(event) {
-  event.preventDefault();
-  let input = document.querySelector("#form").value;
-  let cityName = document.querySelector("#city");
-  cityName.innerHTML = input;
-  let apiKey = "ed136b54c46892c2f08167afd8eae8a3";
-  let apiUrl = `https://api.openweathermap.org/data/2.5/weather?q=${input}&appid=${apiKey}&&units=imperial`;
-
-  function showTemperature(response) {
-    let temp = Math.round(response.data.main.temp);
-    let temperatureElement = document.querySelector("#temperature");
-    temperatureElement.innerHTML = `${temp}°F`;
+function formatHours(timestamp) {
+  let date = new Date(timestamp);
+  let hours = date.getHours();
+  let minutes = date.getMinutes();
+  if (minutes < 10) {
+    minutes = `0${minutes}`;
   }
-  axios.get(apiUrl).then(showTemperature);
+
+  return `${hours}:${minutes}`;
 }
 
-function showInitialTemperature(response) {
-  console.log(response);
-  let initialTemperatureElement = document.querySelector("#temperature");
-  let temp = Math.round(response.data.main.temp);
-  initialTemperatureElement.innerHTML = `${temp}°F`;
+function displayTemperature(response) {
+  let temperatureElement = document.querySelector("#temperature");
+  let cityElement = document.querySelector("#city");
+  let descriptionElement = document.querySelector("#description");
+  let humidityElement = document.querySelector("#humidity");
+  let windElement = document.querySelector("#wind");
+  let dateElement = document.querySelector("#date");
+  let iconElement = document.querySelector("#icon");
+
+  fahrenheitTemperature = response.data.main.temp;
+
+  temperatureElement.innerHTML = `${Math.round(fahrenheitTemperature)}°`;
+  cityElement.innerHTML = response.data.name;
+  descriptionElement.innerHTML = response.data.weather[0].description;
+  humidityElement.innerHTML = response.data.main.humidity;
+  windElement.innerHTML = Math.round(response.data.wind.speed);
+  dateElement.innerHTML = formatDate(response.data.dt * 1000);
+  iconElement.setAttribute(
+    "src",
+    `http://openweathermap.org/img/wn/${response.data.weather[0].icon}@2x.png`
+  );
+  iconElement.setAttribute("alt", response.data.weather[0].description);
 }
 
-function getPosition(position) {
-  let lat = position.coords.latitude;
-  let lon = position.coords.longitude;
-  let apiKey = "ed136b54c46892c2f08167afd8eae8a3";
-  let apiUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&&units=imperial`;
+function displayForecast(response) {
+  let forecastElement = document.querySelector("#forecast");
+  forecastElement.innerHTML = null;
+  let forecast = null;
 
-  console.log(apiUrl);
-
-  axios.get(apiUrl).then(showInitialTemperature);
+  for (let index = 0; index < 6; index++) {
+    forecast = response.data.list[index];
+    forecastElement.innerHTML += `
+    <div class="col-2 text-center">
+      <h3 class="h5 text-gray">
+        ${formatHours(forecast.dt * 1000)}
+      </h3>
+      <img class="img-50"
+        src="http://openweathermap.org/img/wn/${
+          forecast.weather[0].icon
+        }@2x.png"
+      />
+      <div class="text-gray">
+        <strong>
+          ${Math.round(forecast.main.temp_max)}°
+        </strong>
+        ${Math.round(forecast.main.temp_min)}°
+      </div>
+    </div>
+  `;
+  }
 }
 
-navigator.geolocation.getCurrentPosition(getPosition);
+function search(city) {
+  let apiKey = "5f472b7acba333cd8a035ea85a0d4d4c";
+  let apiUrl = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=imperial`;
+  axios.get(apiUrl).then(displayTemperature);
+
+  apiUrl = `https://api.openweathermap.org/data/2.5/forecast?q=${city}&appid=${apiKey}&units=imperial`;
+  axios.get(apiUrl).then(displayForecast);
+}
+
+function handleSubmit(event) {
+  event.preventDefault();
+  let cityInputElement = document.querySelector("#city-input");
+  search(cityInputElement.value);
+}
+
+function displayCelsiusTemperature(event) {
+  event.preventDefault();
+  let temperatureElement = document.querySelector("#temperature");
+
+  celsiusLink.classList.add("active");
+  fahrenheitLink.classList.remove("active");
+  let celsiusTemperature = (fahrenheitTemperature - 32) * 5 / 9;
+  temperatureElement.innerHTML = `${Math.round(celsiusTemperature)}°`;
+}
+
+function displayFahrenheitTemperature(event) {
+  event.preventDefault();
+  celsiusLink.classList.remove("active");
+  fahrenheitLink.classList.add("active");
+  let temperatureElement = document.querySelector("#temperature");
+  temperatureElement.innerHTML = `${Math.round(fahrenheitTemperature)}°`;
+}
+
+let form = document.querySelector("#search-form");
+form.addEventListener("submit", handleSubmit);
+
+let fahrenheitLink = document.querySelector("#fahrenheit-link");
+fahrenheitLink.addEventListener("click", displayFahrenheitTemperature);
+
+let celsiusLink = document.querySelector("#celsius-link");
+celsiusLink.addEventListener("click", displayCelsiusTemperature);
+
+search("Cincinnati");

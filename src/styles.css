@@ -1,5 +1,6 @@
 .city {
   font-family: "Work Sans", sans-serif;
+  text-transform: capitalize;
 }
 
 .temp {
@@ -33,4 +34,18 @@ body {
 .search:hover {
   color: #f3e7e9;
   background-image: linear-gradient(to right, #243949 0%, #517fa4 100%);
+}
+
+li:first-letter {
+  text-transform: capitalize;
+}
+
+.text-gray {
+  color: #808080;
+}
+
+.img-50 {
+  height: 50px;
+  display: block;
+  margin: 0 auto;
 }
